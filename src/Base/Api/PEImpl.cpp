@@ -145,7 +145,7 @@ namespace Mortis::API
 		-> Expected<PIMAGE_SECTION_HEADER>
 	{
 		auto expSecSpan = GetSecSpan(BaseAddress);
-		if (expSecSpan.has_value()) {
+		if (expSecSpan.has_value() == false) {
 			return UnExpected(expSecSpan.error());
 		}
 		return &expSecSpan.value().back();
@@ -155,7 +155,7 @@ namespace Mortis::API
 		-> Expected<PIMAGE_SECTION_HEADER>
 	{
 		auto expSec = GetSecSpan(BaseAddress);
-		if (expSec.has_value()) {
+		if (expSec.has_value() == false) {
 			return UnExpected(expSec.error());
 		}
 		for (auto& sec : expSec.value()) {
