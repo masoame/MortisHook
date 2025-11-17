@@ -22,7 +22,7 @@ namespace Mortis::API
 	}
 
 	template<typename AddressType = LPVOID>
-	constexpr auto MakeAddress(auto address, auto offset) noexcept -> AddressType {
+	constexpr auto OffsetAddress(auto address, std::ptrdiff_t offset) noexcept -> AddressType {
 		return reinterpret_cast<AddressType>(reinterpret_cast<std::ptrdiff_t>(address) + offset);
 	};
 

@@ -11,7 +11,7 @@ namespace Mortis::API
 			return nullptr;
 		}
 		auto ExpDir = std::make_unique<IMAGE_EXPORT_DIRECTORY>();
-		if (ReadProcessMemory(ProcessHandle, MakeAddress(BaseAddress, FileHeader->second.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress), ExpDir.get(), sizeof(IMAGE_EXPORT_DIRECTORY), 0) == false) {
+		if (ReadProcessMemory(ProcessHandle, OffsetAddress(BaseAddress, FileHeader->second.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress), ExpDir.get(), sizeof(IMAGE_EXPORT_DIRECTORY), 0) == false) {
 			return nullptr;
 		}
 		return ExpDir;
@@ -25,7 +25,7 @@ namespace Mortis::API
 			return UnExpected(expDosAndNt.error());
 		}
 		auto& [pDos, pNt] = expDosAndNt.value();
-		return MakeAddress<PIMAGE_EXPORT_DIRECTORY>(pDos, pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+		return OffsetAddress<PIMAGE_EXPORT_DIRECTORY>(pDos, pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
 	}
 
 	auto GetNameOfRVAGroup(HANDLE ProcessHandle, HMODULE BaseAddress, const std::unique_ptr<IMAGE_EXPORT_DIRECTORY>& ExpDir)
@@ -37,7 +37,7 @@ namespace Mortis::API
 		std::vector<Rva> Namestable;
 		Namestable.resize(ExpDir->NumberOfNames);
 
-		if (ReadProcessMemory(ProcessHandle, MakeAddress(BaseAddress, ExpDir->AddressOfNames), &Namestable[0], ExpDir->NumberOfNames * sizeof(Rva), 0) == false) {
+		if (ReadProcessMemory(ProcessHandle, OffsetAddress(BaseAddress, ExpDir->AddressOfNames), &Namestable[0], ExpDir->NumberOfNames * sizeof(Rva), 0) == false) {
 			return {};
 		}
 		return Namestable;
@@ -50,7 +50,7 @@ namespace Mortis::API
 		if (ExpDir.AddressOfNames == 0) {
 			return {};
 		}
-		std::span<Rva> Namestable{ MakeAddress<Rva*>(BaseAddress, ExpDir.AddressOfNames),ExpDir.NumberOfNames };
+		std::span<Rva> Namestable{ OffsetAddress<Rva*>(BaseAddress, ExpDir.AddressOfNames),ExpDir.NumberOfNames };
 		return Namestable;
 	}
 
@@ -73,16 +73,16 @@ namespace Mortis::API
 
 			auto& [ordinal, rva, procName] = ExportTable[i];
 
-			if (ReadProcessMemory(ProcessHandle, MakeAddress(BaseAddress, Namestable[i]), ProcName.data(), ProcName.size() - 1, 0) == false) {
+			if (ReadProcessMemory(ProcessHandle, OffsetAddress(BaseAddress, Namestable[i]), ProcName.data(), ProcName.size() - 1, 0) == false) {
 				return {};
 			}
 
 			procName = ProcName.data();
 
-			if (ReadProcessMemory(ProcessHandle, MakeAddress(BaseAddress, ExpDir->AddressOfNameOrdinals + sizeof(int16_t) * i), &ordinal, sizeof(int16_t), 0) == false) {
+			if (ReadProcessMemory(ProcessHandle, OffsetAddress(BaseAddress, ExpDir->AddressOfNameOrdinals + sizeof(int16_t) * i), &ordinal, sizeof(int16_t), 0) == false) {
 				return {};
 			}
-			if (ReadProcessMemory(ProcessHandle, MakeAddress(BaseAddress, ExpDir->AddressOfFunctions + (ordinal - ExpDir->Base + 1) * sizeof(int32_t)), &rva, sizeof(int32_t), 0) == false) {
+			if (ReadProcessMemory(ProcessHandle, OffsetAddress(BaseAddress, ExpDir->AddressOfFunctions + (ordinal - ExpDir->Base + 1) * sizeof(int32_t)), &rva, sizeof(int32_t), 0) == false) {
 				return {};
 			}
 		}
@@ -106,9 +106,9 @@ namespace Mortis::API
 
 		for (std::size_t i = 0; i != pExportDir->NumberOfNames; i++) {
 			auto& [ordinal, rva, procName] = ExportTable[i];
-			procName = MakeAddress<const char*>(BaseAddress, nameRvaView[i]);
-			ordinal = *MakeAddress<Ordinal*>(BaseAddress, pExportDir->AddressOfNameOrdinals + sizeof(Ordinal) * i);
-			rva = *MakeAddress<Rva*>(BaseAddress, pExportDir->AddressOfFunctions + (ordinal - pExportDir->Base + 1) * sizeof(Rva));
+			procName = OffsetAddress<const char*>(BaseAddress, nameRvaView[i]);
+			ordinal = *OffsetAddress<Ordinal*>(BaseAddress, pExportDir->AddressOfNameOrdinals + sizeof(Ordinal) * i);
+			rva = *OffsetAddress<Rva*>(BaseAddress, pExportDir->AddressOfFunctions + (ordinal - pExportDir->Base + 1) * sizeof(Rva));
 		}
 		return ExportTable;
 	}
@@ -144,7 +144,7 @@ namespace Mortis::API
 		std::vector<FuncPtr> result;
 		for (const auto& [ordinal, addr, name] : ExpTable) {
 			if (std::find(fcNameGroup.begin(), fcNameGroup.end(), name) != fcNameGroup.end()) {
-				result.emplace_back(MakeAddress<FuncPtr>(BaseAddress, addr));
+				result.emplace_back(OffsetAddress<FuncPtr>(BaseAddress, addr));
 			}
 		}
 		return result;
@@ -160,7 +160,7 @@ namespace Mortis::API
 		std::vector<FuncPtr> result;
 		for (const auto& [ordinal, addr, name] : expExportTable.value()) {
 			if (std::find(fcNameGroup.cbegin(), fcNameGroup.cend(), name) != fcNameGroup.cend()) {
-				result.emplace_back(MakeAddress<FuncPtr>(BaseAddress, addr));
+				result.emplace_back(OffsetAddress<FuncPtr>(BaseAddress, addr));
 			}
 		}
 		return result;

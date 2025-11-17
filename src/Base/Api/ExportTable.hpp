@@ -76,7 +76,7 @@ namespace Mortis::API
 		}
 		for (const auto& [ordinal, addr, name] : expExportTable.value()) {
 			if (name == fcName) {
-				return MakeAddress<TFuncPtr>(BaseAddress, addr);
+				return OffsetAddress<TFuncPtr>(BaseAddress, addr);
 			}
 		}
 		return UnExpected("GetProcAddressEx no found func By Name");

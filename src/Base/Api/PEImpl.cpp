@@ -38,7 +38,7 @@ namespace Mortis::API
 			|| (FileHeader->first.e_magic != 0x5A4D)) {
 			return nullptr;
 		}
-		if (ReadProcessMemory(ProcessHandle, MakeAddress(BaseAddress, FileHeader->first.e_lfanew), &FileHeader->second, sizeof(IMAGE_NT_HEADERS), 0) == false
+		if (ReadProcessMemory(ProcessHandle, OffsetAddress(BaseAddress, FileHeader->first.e_lfanew), &FileHeader->second, sizeof(IMAGE_NT_HEADERS), 0) == false
 			|| (FileHeader->second.Signature != 0x4550)) {
 			return nullptr;
 		}
@@ -84,7 +84,7 @@ namespace Mortis::API
 	auto GetNtHeader(const IMAGE_DOS_HEADER& dos) 
 		-> Expected<PIMAGE_NT_HEADERS>
 	{
-		auto pNt = MakeAddress<PIMAGE_NT_HEADERS>(&dos, dos.e_lfanew);
+		auto pNt = OffsetAddress<PIMAGE_NT_HEADERS>(&dos, dos.e_lfanew);
 		if (pNt->Signature != 0x4550) {
 			return UnExpected("GetNtHeader Error!!!");
 		}
