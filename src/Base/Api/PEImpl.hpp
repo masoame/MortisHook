@@ -49,9 +49,8 @@ namespace Mortis::API
 	auto GetSecByName(HMODULE BaseAddress, std::string_view sName)
 		-> Expected<PIMAGE_SECTION_HEADER>;
 
-	auto AddSection(HMODULE BaseAddress, std::string_view sName, DWORD dwSize, DWORD dwCharacteristics)
-		-> Expected<PIMAGE_SECTION_HEADER>;
-
+	auto AlignMent(std::size_t size, std::size_t alignment)
+		-> std::size_t;
 
 	auto IsDebuggerPresent() 
 		-> bool;

@@ -51,14 +51,15 @@ namespace Mortis::API
 		auto dosAndNt = std::make_pair<PIMAGE_DOS_HEADER, PIMAGE_NT_HEADERS>(nullptr, nullptr);
 		auto& [pDos, pNt] = dosAndNt;
 
-		auto pPEB = GetPEB();
-		pDos = BaseAddress ? reinterpret_cast<PIMAGE_DOS_HEADER>(BaseAddress) : reinterpret_cast<PIMAGE_DOS_HEADER>(pPEB->ImageBaseAddress);
-		pNt = MakeAddress<PIMAGE_NT_HEADERS>(pDos, pDos->e_lfanew);
-
-		if (pDos->e_magic != 0x5A4D || pNt->Signature != 0x4550) {
-			return UnExpected("GetDosAndNtHeader Error!!!");
+		auto expDos = GetDosHeader(BaseAddress);
+		if (expDos.has_value() == false) {
+			return UnExpected(expDos.error());
 		}
-		return dosAndNt;
+		auto expNt = GetNtHeader(*expDos.value());
+		if (expNt.has_value() == false) {
+			return UnExpected(expNt.error());
+		}
+		return std::make_pair(expDos.value(), expNt.value());
 	}
 
 	auto GetDosHeader(HMODULE BaseAddress /*= nullptr*/)
@@ -163,43 +164,11 @@ namespace Mortis::API
 			if (std::string_view(bufName) == sName) {
 				return &sec;
 			}
-		}
+	}
 		return UnExpected("GetSecByName no found sec By Name");
 	}
 
-	int AlignMent(int size,int alignment) {
+	std::size_t AlignMent(std::size_t size, std::size_t alignment) {
 		return (size) % (alignment) == 0 ? (size) : ((size) / alignment + 1) * (alignment);
 	}
-
-
-	auto AddSection(HMODULE BaseAddress, std::string_view sName, DWORD dwSize, DWORD dwCharacteristics) 
-		-> Expected<PIMAGE_SECTION_HEADER>
-	{
-		return nullptr;
-	}
-
-	char* AddSec(HMODULE hpe, _In_ DWORD& filesize, _In_ const char* secname, _In_ const int secsize) {
-
-		GetFileHeader(hpe).value()->NumberOfSections++;
-		PIMAGE_SECTION_HEADER pesec = GetLastSec(hpe).value();
-		//设置区段表属性
-		memcpy(pesec->Name, secname, 8);
-		pesec->Misc.VirtualSize = secsize;
-		pesec->VirtualAddress = (pesec - 1)->VirtualAddress + AlignMent((pesec - 1)->SizeOfRawData, GetOptHeader(hpe).value()->SectionAlignment);
-		pesec->SizeOfRawData = AlignMent(secsize, GetOptHeader(hpe).value()->FileAlignment);
-		pesec->PointerToRawData = AlignMent(filesize, GetOptHeader(hpe).value()->FileAlignment);
-		pesec->Characteristics = 0xE00000E0;
-		//设置OPT头映像大小
-		GetOptHeader(hpe).value()->SizeOfImage = pesec->VirtualAddress + pesec->SizeOfRawData;
-		//扩充文件数据
-		int newSize = pesec->PointerToRawData + pesec->SizeOfRawData;
-		char* nhpe = new char [newSize] {0};
-		//向新缓冲区录入数据
-		memcpy(nhpe, hpe, filesize);
-		//缓存区更替
-		delete hpe;
-		filesize = newSize;
-		return nhpe;
-	}
-
 }
