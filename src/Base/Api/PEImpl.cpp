@@ -1,4 +1,4 @@
-#include <PEImpl.hpp>
+ï»¿#include <PEImpl.hpp>
 #include <ProcessImpl.hpp>
 
 namespace Mortis::API
@@ -175,250 +175,31 @@ namespace Mortis::API
 	auto AddSection(HMODULE BaseAddress, std::string_view sName, DWORD dwSize, DWORD dwCharacteristics) 
 		-> Expected<PIMAGE_SECTION_HEADER>
 	{
-
+		return nullptr;
 	}
 
 	char* AddSec(HMODULE hpe, _In_ DWORD& filesize, _In_ const char* secname, _In_ const int secsize) {
 
 		GetFileHeader(hpe).value()->NumberOfSections++;
 		PIMAGE_SECTION_HEADER pesec = GetLastSec(hpe).value();
-		//ÉèÖÃÇø¶Î±íÊôÐÔ
+		//è®¾ç½®åŒºæ®µè¡¨å±žæ€§
 		memcpy(pesec->Name, secname, 8);
 		pesec->Misc.VirtualSize = secsize;
 		pesec->VirtualAddress = (pesec - 1)->VirtualAddress + AlignMent((pesec - 1)->SizeOfRawData, GetOptHeader(hpe).value()->SectionAlignment);
 		pesec->SizeOfRawData = AlignMent(secsize, GetOptHeader(hpe).value()->FileAlignment);
 		pesec->PointerToRawData = AlignMent(filesize, GetOptHeader(hpe).value()->FileAlignment);
 		pesec->Characteristics = 0xE00000E0;
-		//ÉèÖÃOPTÍ·Ó³Ïñ´óÐ¡
+		//è®¾ç½®OPTå¤´æ˜ åƒå¤§å°
 		GetOptHeader(hpe).value()->SizeOfImage = pesec->VirtualAddress + pesec->SizeOfRawData;
-		//À©³äÎÄ¼þÊý¾Ý
+		//æ‰©å……æ–‡ä»¶æ•°æ®
 		int newSize = pesec->PointerToRawData + pesec->SizeOfRawData;
 		char* nhpe = new char [newSize] {0};
-		//ÏòÐÂ»º³åÇøÂ¼ÈëÊý¾Ý
+		//å‘æ–°ç¼“å†²åŒºå½•å…¥æ•°æ®
 		memcpy(nhpe, hpe, filesize);
-		//»º´æÇø¸üÌæ
+		//ç¼“å­˜åŒºæ›´æ›¿
 		delete hpe;
 		filesize = newSize;
 		return nhpe;
 	}
 
-
-
-}
-
-BOOL PackFile();   //½«Òª¼Ó¿ÇµÄ³ÌÐò¼ÓÃÜÒÔºó¼ÓÈë¿Ç×ÓÖÐ
-VOID EncpyptFile(PUCHAR pBaseAddr, DWORD dwFileSize);   //¶ÔÎÄ¼þÄÚÈÝ½øÐÐ¼ÓÃÜ
-BOOL AddSection(PVOID pShellBase, PVOID pOrgBase, DWORD dwShellFileSize, DWORD dwOrgFileSize);  //½«Ô´ÎÄ¼þ¼Óµ½¿Ç×ÓÖÐ
-VOID ShowError(PCHAR msg);    //µ¯³ö´íÎóÐÅÏ¢
-DWORD Align(DWORD dwSize, DWORD dwAlign);   //ÓÃÓÚ¶ÔÆë£¬·µ»Ø¶ÔÆëÒÔºóµÄÊý×Ö
-
-
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-	_In_opt_ HINSTANCE hPrevInstance,
-	_In_ LPWSTR    lpCmdLine,
-	_In_ int       nCmdShow)
-{
-	if (PackFile())
-	{
-		MessageBox(NULL, TEXT("¼Ó¿Ç³É¹¦"), TEXT("³É¹¦"), MB_OK);
-	}
-
-	return 0;
-}
-
-BOOL PackFile()
-{
-	BOOL bRet = TRUE;
-	HANDLE hOrgFile = NULL, hShellFile = NULL;
-	DWORD dwOrgFileSize = 0, dwShellFileSize = 0, dwRet = 0, dwFileSize = 0;
-	PVOID pOrgBase = NULL, pShellBase = NULL;
-
-	hOrgFile = CreateFile(ORGIN_FILE_NAME,
-		GENERIC_READ,
-		0, NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if (hOrgFile == INVALID_HANDLE_VALUE)
-	{
-		ShowError("CreateFile OrigFile");
-		bRet = FALSE;
-		goto exit;
-	}
-	dwOrgFileSize = GetFileSize(hOrgFile, NULL);
-
-	pOrgBase = VirtualAlloc(NULL, dwOrgFileSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-	if (!pOrgBase)
-	{
-		ShowError("VirtualAlloc pOrgBase");
-		bRet = FALSE;
-		goto exit;
-	}
-
-	ZeroMemory(pOrgBase, dwOrgFileSize);
-	if (!ReadFile(hOrgFile, pOrgBase, dwOrgFileSize, &dwRet, NULL))
-	{
-		ShowError("ReadFile pOrgBase");
-		bRet = FALSE;
-		goto exit;
-	}
-
-	EncpyptFile((PUCHAR)pOrgBase, dwOrgFileSize);  //¶ÔÔ´³ÌÐò½øÐÐXOR¼ÓÃÜ
-
-	hShellFile = CreateFile(SHELL_FILE_NAME,
-		GENERIC_READ,
-		0, NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hShellFile == INVALID_HANDLE_VALUE)
-	{
-		ShowError("CreateFile ShellFile");
-		bRet = FALSE;
-		goto exit;
-	}
-	dwShellFileSize = GetFileSize(hShellFile, NULL);
-
-	pShellBase = VirtualAlloc(NULL, dwShellFileSize + dwOrgFileSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-	if (!pShellBase)
-	{
-		ShowError("VirtualAlloc pShellBase");
-		bRet = FALSE;
-		goto exit;
-	}
-
-	ZeroMemory(pShellBase, dwShellFileSize + dwOrgFileSize);
-	if (!ReadFile(hShellFile, pShellBase, dwShellFileSize, &dwRet, NULL))
-	{
-		ShowError("ReadFile pShellBase");
-		bRet = FALSE;
-		goto exit;
-	}
-
-	if (!AddSection(pShellBase, pOrgBase, dwShellFileSize, dwOrgFileSize))
-	{
-		bRet = FALSE;
-		goto exit;
-	}
-exit:
-	if (hOrgFile) CloseHandle(hOrgFile);
-	if (hShellFile) CloseHandle(hShellFile);
-	if (pOrgBase)
-	{
-		if (!VirtualFree(pOrgBase, 0, MEM_DECOMMIT))
-		{
-			ShowError("VirtualFree pOrgBase");
-		}
-	}
-
-	if (pShellBase)
-	{
-		if (!VirtualFree(pShellBase, 0, MEM_DECOMMIT))
-		{
-			ShowError("VirtualFree pShellBase");
-		}
-	}
-	return bRet;
-}
-
-BOOL AddSection(PVOID pShellBase, PVOID pOrgBase, DWORD dwShellFileSize, DWORD dwOrgFileSize)
-{
-	BOOL bRet = TRUE;
-	DWORD dwRet = 0;
-	HANDLE hFile = NULL;
-	PIMAGE_DOS_HEADER pShellDosHead = (PIMAGE_DOS_HEADER)pShellBase;
-	PIMAGE_FILE_HEADER pShellFileHead = (PIMAGE_FILE_HEADER)((DWORD)pShellBase + pShellDosHead->e_lfanew + 4);
-	PIMAGE_OPTIONAL_HEADER32 pShellOptionHead = (PIMAGE_OPTIONAL_HEADER32)((DWORD)pShellFileHead + IMAGE_SIZEOF_FILE_HEADER);
-	PIMAGE_SECTION_HEADER pShellSectionHead = (PIMAGE_SECTION_HEADER)((DWORD)pShellOptionHead + pShellFileHead->SizeOfOptionalHeader);
-	DWORD dwFileAlignment = pShellOptionHead->FileAlignment, dwSectionAlignment = pShellOptionHead->SectionAlignment;
-	DWORD dwSize = 0;
-	PVOID pResBase = NULL;
-
-	if (pShellSectionHead[0].PointerToRawData - ((DWORD)&pShellSectionHead[pShellFileHead->NumberOfSections - 1] - (DWORD)pShellBase)
-		< 2 * IMAGE_SIZEOF_SECTION_HEADER)
-	{
-		printf("¿Ç×Ó×îºóÒ»¸ö½Ú±í¼äÏ¶²»¹»\n");
-		bRet = FALSE;
-		goto exit;
-	}
-
-	dwSize = Align(dwOrgFileSize + dwShellFileSize, dwFileAlignment);  //dwFileAlignmentÕûÊý±¶
-	pResBase = VirtualAlloc(NULL, dwSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-	if (!pResBase)
-	{
-		ShowError("VirtualAlloc pResBase");
-		bRet = FALSE;
-		goto exit;
-	}
-
-	ZeroMemory(pResBase, dwSize);
-	memcpy((PVOID)pResBase, pShellBase, dwShellFileSize); //½«Ô´ÎÄ¼þ¸´ÖÆµ½¿Ç×ÓÖÐ
-	memcpy((PVOID)((DWORD)pResBase + dwShellFileSize), pOrgBase, dwOrgFileSize);    //½«Ô´ÎÄ¼þ¸´ÖÆµ½¿Ç×ÓÖÐ
-
-	PIMAGE_DOS_HEADER pResDosHead = (PIMAGE_DOS_HEADER)pResBase;
-	PIMAGE_FILE_HEADER pResFileHead = (PIMAGE_FILE_HEADER)((DWORD)pResBase + pResDosHead->e_lfanew + 4);
-	PIMAGE_OPTIONAL_HEADER32 pResOptionHead = (PIMAGE_OPTIONAL_HEADER32)((DWORD)pResFileHead + IMAGE_SIZEOF_FILE_HEADER);
-	PIMAGE_SECTION_HEADER pResSectionHead = (PIMAGE_SECTION_HEADER)((DWORD)pResOptionHead + pResFileHead->SizeOfOptionalHeader);
-
-	//Ôö¼Ó½Ú±í
-	ZeroMemory((PVOID)&pResSectionHead[pShellFileHead->NumberOfSections], IMAGE_SIZEOF_SECTION_HEADER);
-	memcpy(pResSectionHead[pResFileHead->NumberOfSections].Name, ".1900", strlen(".1900"));
-	pResSectionHead[pResFileHead->NumberOfSections].PointerToRawData = pResSectionHead[pShellFileHead->NumberOfSections - 1].PointerToRawData
-		+ Align(pShellSectionHead[pShellFileHead->NumberOfSections - 1].SizeOfRawData, dwFileAlignment);
-	pResSectionHead[pResFileHead->NumberOfSections].SizeOfRawData = Align(dwOrgFileSize, dwFileAlignment);
-	pResSectionHead[pResFileHead->NumberOfSections].VirtualAddress = pResSectionHead[pShellFileHead->NumberOfSections - 1].VirtualAddress
-		+ Align(pResSectionHead[pShellFileHead->NumberOfSections - 1].Misc.VirtualSize, dwSectionAlignment);
-	pResSectionHead[pResFileHead->NumberOfSections].Misc.VirtualSize = dwOrgFileSize;
-	pResSectionHead[pResFileHead->NumberOfSections].Characteristics |= IMAGE_SCN_MEM_READ;
-
-	pResFileHead->NumberOfSections++;    //Ôö¼Ó½ÚÊýÁ¿
-	pResOptionHead->SizeOfImage += Align(dwOrgFileSize, dwSectionAlignment);  //Ôö¼ÓSizeOfImage
-
-	hFile = CreateFile(TARGET_FILE_NAME,      //´ò¿ªÄ¿±êÎÄ¼þ²¢±£´æ
-		GENERIC_READ | GENERIC_WRITE,
-		0, NULL,
-		CREATE_ALWAYS,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL);
-
-	if (hFile == INVALID_HANDLE_VALUE)
-	{
-		ShowError("CreateFile");
-		bRet = FALSE;
-		goto exit;
-	}
-
-	if (!WriteFile(hFile, pResBase, dwSize, &dwRet, NULL))
-	{
-		ShowError("WriteFile");
-		bRet = FALSE;
-		goto exit;
-	}
-
-exit:
-	if (hFile) CloseHandle(hFile);
-	return bRet;
-}
-
-DWORD Align(DWORD dwSize, DWORD dwAlign)
-{
-	return dwSize % dwAlign ? dwSize + dwAlign - dwSize % dwAlign : dwSize;
-}
-
-VOID EncpyptFile(PUCHAR pBaseAddr, DWORD dwFileSize)
-{
-	DWORD i = 0;
-	UCHAR uKey = 190;    //¼ÓÃÜÃÜÔ¿
-
-	for (i = 0; i < dwFileSize; i++)
-	{
-		if (pBaseAddr[i] && pBaseAddr[i] != uKey) pBaseAddr[i] ^= uKey;
-	}
-}
-
-VOID ShowError(PCHAR msg)
-{
-	CHAR szError[105] = { 0 };
-
-	sprintf(szError, "%s Error %d", msg, GetLastError());
-	MessageBox(NULL, szError, TEXT("Error"), MB_OK);
 }
