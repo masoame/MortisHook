@@ -163,7 +163,7 @@ namespace Mortis::API
 			if (std::string_view(bufName) == sName) {
 				return &sec;
 			}
-		}
+	}
 		return UnExpected("GetSecByName no found sec By Name");
 	}
 
