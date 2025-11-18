@@ -51,7 +51,6 @@ namespace Mortis::API
 
 	auto AlignMent(std::size_t size, std::size_t alignment)
 		-> std::size_t;
-
 	auto IsDebuggerPresent() 
 		-> bool;
 }
