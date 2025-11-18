@@ -151,10 +151,30 @@ namespace Mortis::API
 		return &expSecSpan.value().back();
 	}
 
+	auto GetLastSec(const IMAGE_NT_HEADERS& nt) 
+		-> Expected<PIMAGE_SECTION_HEADER>
+	{
+		auto expSecSpan = GetSecSpan(nt);
+		if (expSecSpan.has_value() == false) {
+			return UnExpected(expSecSpan.error());
+		}
+		return &expSecSpan.value().back();
+	}
+
 	auto GetSecByName(HMODULE BaseAddress, std::string_view sName) 
 		-> Expected<PIMAGE_SECTION_HEADER>
 	{
-		auto expSec = GetSecSpan(BaseAddress);
+		auto expNt = GetNtHeader(BaseAddress);
+		if (expNt.has_value() == false) {
+			return UnExpected(expNt.error());
+		}
+		return GetSecByName(*expNt.value(), sName);
+	}
+
+	auto GetSecByName(const IMAGE_NT_HEADERS& nt, std::string_view sName) 
+		-> Expected<PIMAGE_SECTION_HEADER>
+	{
+		auto expSec = GetSecSpan(nt);
 		if (expSec.has_value() == false) {
 			return UnExpected(expSec.error());
 		}

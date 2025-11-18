@@ -21,6 +21,9 @@ namespace Mortis::API
 		MoAddress& offset(std::ptrdiff_t offset) {
 			_address = OffsetAddress(_address, offset);
 		}
+		MoAddress& offset(LPVOID offset) {
+			_address = OffsetAddress(_address, offset);
+		}
 
 		TPtr get() {
 			return _address;
@@ -60,11 +63,17 @@ namespace Mortis::API
 
 	auto GetSecSpan(HMODULE BaseAddress)
 		-> Expected<std::span<IMAGE_SECTION_HEADER>>;
-	auto GetSecSpan(const IMAGE_NT_HEADERS& BaseAddress)
+	auto GetSecSpan(const IMAGE_NT_HEADERS& nt)
 		-> Expected<std::span<IMAGE_SECTION_HEADER>>;
+
 	auto GetLastSec(HMODULE BaseAddress)
 		-> Expected<PIMAGE_SECTION_HEADER>;
+	auto GetLastSec(const IMAGE_NT_HEADERS& nt)
+		-> Expected<PIMAGE_SECTION_HEADER>;
+
 	auto GetSecByName(HMODULE BaseAddress, std::string_view sName)
+		-> Expected<PIMAGE_SECTION_HEADER>;
+	auto GetSecByName(const IMAGE_NT_HEADERS& nt, std::string_view sName)
 		-> Expected<PIMAGE_SECTION_HEADER>;
 
 	auto AlignMent(std::size_t size, std::size_t alignment)
