@@ -12,6 +12,24 @@ namespace Mortis::API
 
 namespace Mortis::API
 {
+	template<typename TPtr>
+		requires(std::is_pointer_v<TPtr>)
+	struct MoAddress 
+	{
+		TPtr& _address;
+		explicit MoAddress(TPtr& refAddress) : _address(refAddress) { }
+		MoAddress& offset(std::ptrdiff_t offset) {
+			_address = OffsetAddress(_address, offset);
+		}
+
+		TPtr get() {
+			return _address;
+		}
+		operator TPtr&() {
+			return _address;
+		}
+	};
+
 	TYPE::PPEB GetPEB();
 	TYPE::PTEB GetTEB();
 
