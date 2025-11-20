@@ -16,19 +16,20 @@ namespace Mortis::API
 		requires(std::is_pointer_v<TPtr>)
 	struct MoAddress 
 	{
-		TPtr& _address;
-		explicit MoAddress(TPtr& refAddress) : _address(refAddress) { }
+		TPtr _address;
+		explicit MoAddress(TPtr refAddress) : _address(refAddress) { }
 
 		MoAddress& offset(std::ptrdiff_t offset) {
 			_address = OffsetAddress(_address, offset);
+			return *this;
 		}
 
 		MoAddress& sumOffset(LPVOID offset) {
-			_address = offset(_address,(std::ptrdiff_t) offset);
+			return offset(_address,(std::ptrdiff_t) offset);
 		}
 
 		MoAddress& subOffset(LPVOID offset) {
-			_address = offset(_address, -(std::ptrdiff_t)offset);
+			return offset(_address, -(std::ptrdiff_t)offset);
 		}
 
 		template<typename TR>
