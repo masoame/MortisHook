@@ -31,8 +31,9 @@ namespace Mortis::API
 			_address = offset(_address, -(std::ptrdiff_t)offset);
 		}
 
-		TPtr get() {
-			return _address;
+		template<typename TR>
+		TR get() {
+			return reinterpret_cast<TR>(_address);
 		}
 		operator TPtr&() {
 			return _address;
