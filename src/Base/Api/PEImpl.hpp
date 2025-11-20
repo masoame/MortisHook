@@ -67,7 +67,7 @@ namespace Mortis::API
 	auto GetOptHeader(HMODULE BaseAddress = nullptr)
 		-> Expected<PIMAGE_OPTIONAL_HEADER>;
 	auto GetOptHeader(IMAGE_NT_HEADERS& nt)
-		-> Expected<PIMAGE_OPTIONAL_HEADER>;
+		-> PIMAGE_OPTIONAL_HEADER;
 
 	auto GetSecSpan(HMODULE BaseAddress)
 		-> Expected<std::span<IMAGE_SECTION_HEADER>>;
@@ -88,4 +88,27 @@ namespace Mortis::API
 		-> std::size_t;
 	auto IsDebuggerPresent() 
 		-> bool;
+
+
+	template<typename TDecoder>
+	class BaseDecoder : StaticHelper {
+		static auto Encry() { return TDecoder::Encry() }
+	};
+
+	template<typename TBaseDecoder = void>
+		requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
+	class PEParser
+	{
+	protected:
+		PIMAGE_DOS_HEADER _pDosHeader;
+		PIMAGE_NT_HEADERS _pNtHeader;
+	public:
+		PEParser(HMODULE hModule);
+
+		auto imageBase() const { return reinterpret_cast<HMODULE>(_pDosHeader); }
+		auto getDosHeader() const { return _pDosHeader; }
+		auto getNtHeader() const { return _pNtHeader; }
+		auto getFileHeader() const { return GetFileHeader(*_pNtHeader); }
+		auto getOptHeader() const { return GetOptHeader(*_pNtHeader); }
+	};
 }

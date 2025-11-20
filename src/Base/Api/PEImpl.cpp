@@ -119,7 +119,7 @@ namespace Mortis::API
 	}
 
 	auto GetOptHeader(IMAGE_NT_HEADERS& nt) 
-		-> Expected<PIMAGE_OPTIONAL_HEADER> {
+		-> PIMAGE_OPTIONAL_HEADER {
 		return &nt.OptionalHeader;
 	}
 
@@ -185,4 +185,16 @@ namespace Mortis::API
 	std::size_t AlignMent(std::size_t size, std::size_t alignment) {
 		return (size) % (alignment) == 0 ? (size) : ((size) / alignment + 1) * (alignment);
 	}
+
+	PEParser::PEParser(HMODULE hModule)
+	{
+		auto expDosAndNt = GetDosAndNtHeader(hModule);
+		if (expDosAndNt.has_value() == false) {
+			throw std::runtime_error(expDosAndNt.error().data());
+		}
+		auto& [pDos, pNt] = expDosAndNt.value();
+		_pDosHeader = pDos;
+		_pNtHeader = pNt;
+	}
+
 }
