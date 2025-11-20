@@ -19,17 +19,17 @@ namespace Mortis::API
 		TPtr _address;
 		explicit MoAddress(TPtr refAddress) : _address(refAddress) { }
 
-		MoAddress& offset(std::ptrdiff_t offset) {
-			_address = OffsetAddress(_address, offset);
+		MoAddress& offset(std::ptrdiff_t nOffset) {
+			_address = OffsetAddress(_address, nOffset);
 			return *this;
 		}
 
-		MoAddress& sumOffset(LPVOID offset) {
-			return offset(_address,(std::ptrdiff_t) offset);
+		MoAddress& sumOffset(LPVOID nOffset) {
+			return offset(reinterpret_cast<std::ptrdiff_t>(nOffset));
 		}
 
-		MoAddress& subOffset(LPVOID offset) {
-			return offset(_address, -(std::ptrdiff_t)offset);
+		MoAddress& subOffset(LPVOID nOffset) {
+			return offset(-reinterpret_cast<std::ptrdiff_t>(nOffset));
 		}
 
 		template<typename TR>
