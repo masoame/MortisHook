@@ -134,7 +134,7 @@ namespace Mortis::API
 	}
 
 	auto GetSecSpan(const IMAGE_NT_HEADERS& nt) 
-		-> Expected<std::span<IMAGE_SECTION_HEADER>>
+		-> std::span<IMAGE_SECTION_HEADER>
 	{
 		auto pFileHeader = GetFileHeader(nt);
 		auto SecNum = pFileHeader->NumberOfSections;
@@ -152,13 +152,10 @@ namespace Mortis::API
 	}
 
 	auto GetLastSec(const IMAGE_NT_HEADERS& nt) 
-		-> Expected<PIMAGE_SECTION_HEADER>
+		-> PIMAGE_SECTION_HEADER
 	{
-		auto expSecSpan = GetSecSpan(nt);
-		if (expSecSpan.has_value() == false) {
-			return UnExpected(expSecSpan.error());
-		}
-		return &expSecSpan.value().back();
+		auto secSpan = GetSecSpan(nt);
+		return &secSpan.back();
 	}
 
 	auto GetSecByName(HMODULE BaseAddress, std::string_view sName) 
@@ -174,12 +171,9 @@ namespace Mortis::API
 	auto GetSecByName(const IMAGE_NT_HEADERS& nt, std::string_view sName) 
 		-> Expected<PIMAGE_SECTION_HEADER>
 	{
-		auto expSec = GetSecSpan(nt);
-		if (expSec.has_value() == false) {
-			return UnExpected(expSec.error());
-		}
-		for (auto& sec : expSec.value()) {
-			char bufName[10] = { 0 };
+		auto secSpan = GetSecSpan(nt);
+		char bufName[10] = { 0 };
+		for (auto& sec : secSpan) {
 			memcpy_s(bufName, 8, sec.Name, 8);
 			if (std::string_view(bufName) == sName) {
 				return &sec;

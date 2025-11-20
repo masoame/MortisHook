@@ -44,9 +44,9 @@ namespace Mortis::API
 	auto GetDosHeader(HMODULE BaseAddress = nullptr)
 		-> Expected<PIMAGE_DOS_HEADER>;
 
-	auto GetNtHeader(const IMAGE_DOS_HEADER& BaseAddress)
-		-> Expected<PIMAGE_NT_HEADERS>;
 	auto GetNtHeader(HMODULE BaseAddress = nullptr)
+		-> Expected<PIMAGE_NT_HEADERS>;
+	auto GetNtHeader(const IMAGE_DOS_HEADER& dos)
 		-> Expected<PIMAGE_NT_HEADERS>;
 
 	auto GetFileHeader(HMODULE BaseAddress = nullptr)
@@ -64,12 +64,12 @@ namespace Mortis::API
 	auto GetSecSpan(HMODULE BaseAddress)
 		-> Expected<std::span<IMAGE_SECTION_HEADER>>;
 	auto GetSecSpan(const IMAGE_NT_HEADERS& nt)
-		-> Expected<std::span<IMAGE_SECTION_HEADER>>;
+		-> std::span<IMAGE_SECTION_HEADER>;
 
 	auto GetLastSec(HMODULE BaseAddress)
 		-> Expected<PIMAGE_SECTION_HEADER>;
 	auto GetLastSec(const IMAGE_NT_HEADERS& nt)
-		-> Expected<PIMAGE_SECTION_HEADER>;
+		-> PIMAGE_SECTION_HEADER;
 
 	auto GetSecByName(HMODULE BaseAddress, std::string_view sName)
 		-> Expected<PIMAGE_SECTION_HEADER>;
