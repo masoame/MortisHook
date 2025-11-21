@@ -14,10 +14,10 @@ namespace Mortis::API
 {
 	template<typename TPtr>
 		requires(std::is_pointer_v<TPtr>)
-	struct MoAddress 
+	struct MoAddress
 	{
 		TPtr _address;
-		explicit MoAddress(TPtr refAddress) : _address(refAddress) { }
+		explicit MoAddress(TPtr refAddress) : _address(refAddress) {}
 
 		MoAddress& offset(std::ptrdiff_t nOffset) {
 			_address = OffsetAddress(_address, nOffset);
@@ -36,7 +36,7 @@ namespace Mortis::API
 		TR get() {
 			return reinterpret_cast<TR>(_address);
 		}
-		operator TPtr&() {
+		operator TPtr& () {
 			return _address;
 		}
 	};
@@ -86,24 +86,39 @@ namespace Mortis::API
 
 	auto AlignMent(std::size_t size, std::size_t alignment)
 		-> std::size_t;
-	auto IsDebuggerPresent() 
+	auto IsDebuggerPresent()
 		-> bool;
 
 
 	template<typename TDecoder>
 	class BaseDecoder : StaticHelper {
-		static auto Encry() { return TDecoder::Encry() }
+		static std::vector<char> Decrypt(HMODULE strView) { return TDecoder::Decrypt(strView); }
 	};
 
-	template<typename TBaseDecoder = void>
+	class NoneDecoder : public BaseDecoder<NoneDecoder>
+	{
+		static std::vector<char> Decrypt(HMODULE strView) { return {}; }
+	};
+
+	template<typename TBaseDecoder = NoneDecoder>
 		requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
 	class PEParser
 	{
+		std::vector<char> _cache;
 	protected:
-		PIMAGE_DOS_HEADER _pDosHeader;
-		PIMAGE_NT_HEADERS _pNtHeader;
+		PIMAGE_DOS_HEADER _pDosHeader = nullptr;
+		PIMAGE_NT_HEADERS _pNtHeader = nullptr;
 	public:
-		PEParser(HMODULE hModule);
+		PEParser(HMODULE hModule) {
+			_cache = TBaseDecoder::Decrypt(hModule);
+			auto expDosAndNt = GetDosAndNtHeader(_cache.empty() ?  hModule : reinterpret_cast<HMODULE>(_cache.data()));
+			if (expDosAndNt.has_value() == false) {
+				throw std::runtime_error(expDosAndNt.error().data());
+			}
+			auto& [pDos, pNt] = expDosAndNt.value();
+			_pDosHeader = pDos;
+			_pNtHeader = pNt;
+		}
 
 		auto imageBase() const { return reinterpret_cast<HMODULE>(_pDosHeader); }
 		auto getDosHeader() const { return _pDosHeader; }

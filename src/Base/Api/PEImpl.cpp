@@ -186,15 +186,6 @@ namespace Mortis::API
 		return (size) % (alignment) == 0 ? (size) : ((size) / alignment + 1) * (alignment);
 	}
 
-	PEParser::PEParser(HMODULE hModule)
-	{
-		auto expDosAndNt = GetDosAndNtHeader(hModule);
-		if (expDosAndNt.has_value() == false) {
-			throw std::runtime_error(expDosAndNt.error().data());
-		}
-		auto& [pDos, pNt] = expDosAndNt.value();
-		_pDosHeader = pDos;
-		_pNtHeader = pNt;
-	}
+
 
 }
