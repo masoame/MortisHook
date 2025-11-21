@@ -4,7 +4,7 @@
 namespace Mortis::API
 {
 	using namespace Mortis::TYPE;
-	PPEB GetPEB() {
+	PPEB GetPEB() noexcept {
 #ifdef _WIN64
 		return (PPEB)__readgsqword(0x60);
 #else
@@ -12,7 +12,7 @@ namespace Mortis::API
 #endif
 	}
 
-	PTEB GetTEB() {
+	PTEB GetTEB() noexcept {
 #ifdef _WIN64
 		return (PTEB)__readgsqword(0x00);
 #else
@@ -21,11 +21,12 @@ namespace Mortis::API
 	}
 
 
-	auto IsDebuggerPresent() -> bool {
+	auto IsDebuggerPresent()  noexcept
+		-> bool {
 		return GetPEB()->BeingDebugged;
 	}
 
-	auto GetDosAndNtHeader(HANDLE ProcessHandle, HMODULE BaseAddress)
+	auto GetDosAndNtHeader(HANDLE ProcessHandle, HMODULE BaseAddress) noexcept
 		-> std::unique_ptr<std::pair<IMAGE_DOS_HEADER, IMAGE_NT_HEADERS>>
 	{
 		if (!ProcessHandle || !BaseAddress) {
@@ -45,7 +46,7 @@ namespace Mortis::API
 		return FileHeader;
 	}
 
-	auto GetDosAndNtHeader(HMODULE BaseAddress /*= nullptr*/)
+	auto GetDosAndNtHeader(HMODULE BaseAddress /*= nullptr*/) noexcept
 		-> Expected<std::pair<PIMAGE_DOS_HEADER, PIMAGE_NT_HEADERS>>
 	{
 		auto dosAndNt = std::make_pair<PIMAGE_DOS_HEADER, PIMAGE_NT_HEADERS>(nullptr, nullptr);
@@ -62,7 +63,7 @@ namespace Mortis::API
 		return std::make_pair(expDos.value(), expNt.value());
 	}
 
-	auto GetDosHeader(HMODULE BaseAddress /*= nullptr*/)
+	auto GetDosHeader(HMODULE BaseAddress /*= nullptr*/) noexcept
 		-> Expected<PIMAGE_DOS_HEADER>
 	{
 		auto pDos = BaseAddress ? reinterpret_cast<PIMAGE_DOS_HEADER>(BaseAddress) : reinterpret_cast<PIMAGE_DOS_HEADER>(GetPEB()->ImageBaseAddress);
@@ -72,7 +73,7 @@ namespace Mortis::API
 		return pDos;
 	}
 
-	auto GetNtHeader(HMODULE BaseAddress /*= nullptr*/) 
+	auto GetNtHeader(HMODULE BaseAddress /*= nullptr*/)  noexcept
 		-> Expected<PIMAGE_NT_HEADERS>
 	{
 		auto expDos = GetDosHeader(BaseAddress);
@@ -81,7 +82,7 @@ namespace Mortis::API
 		}
 		return GetNtHeader(*expDos.value());
 	}
-	auto GetNtHeader(const IMAGE_DOS_HEADER& dos) 
+	auto GetNtHeader(const IMAGE_DOS_HEADER& dos)  noexcept
 		-> Expected<PIMAGE_NT_HEADERS>
 	{
 		auto pNt = OffsetAddress<PIMAGE_NT_HEADERS>(&dos, dos.e_lfanew);
@@ -91,7 +92,7 @@ namespace Mortis::API
 		return pNt;
 	}
 
-	auto GetFileHeader(HMODULE BaseAddress /*= nullptr*/)
+	auto GetFileHeader(HMODULE BaseAddress /*= nullptr*/) noexcept
 		-> Expected<PIMAGE_FILE_HEADER> 
 	{
 		auto expNt = GetNtHeader(BaseAddress);
@@ -100,16 +101,17 @@ namespace Mortis::API
 		}
 		return GetFileHeader(*expNt.value());
 	}
-	auto GetFileHeader(IMAGE_NT_HEADERS& nt) 
+	auto GetFileHeader(IMAGE_NT_HEADERS& nt)  noexcept
 		-> PIMAGE_FILE_HEADER {
 		return &nt.FileHeader;
 	}
-	auto GetFileHeader(const IMAGE_NT_HEADERS& nt) 
+	auto GetFileHeader(const IMAGE_NT_HEADERS& nt)  noexcept
 		-> const IMAGE_FILE_HEADER* {
 		return &nt.FileHeader;
 	}
 
-	auto GetOptHeader(HMODULE BaseAddress /*= nullptr*/) -> Expected<PIMAGE_OPTIONAL_HEADER>
+	auto GetOptHeader(HMODULE BaseAddress /*= nullptr*/) noexcept
+		-> Expected<PIMAGE_OPTIONAL_HEADER>
 	{
 		auto expNt = GetNtHeader(BaseAddress);
 		if (expNt.has_value() == false) {
@@ -118,12 +120,12 @@ namespace Mortis::API
 		return GetOptHeader(*expNt.value());
 	}
 
-	auto GetOptHeader(IMAGE_NT_HEADERS& nt) 
+	auto GetOptHeader(IMAGE_NT_HEADERS& nt)  noexcept
 		-> PIMAGE_OPTIONAL_HEADER {
 		return &nt.OptionalHeader;
 	}
 
-	auto GetSecSpan(HMODULE BaseAddress) 
+	auto GetSecSpan(HMODULE BaseAddress)  noexcept
 		-> Expected<std::span<IMAGE_SECTION_HEADER>>
 	{
 		auto expNt = GetNtHeader(BaseAddress);
@@ -133,7 +135,7 @@ namespace Mortis::API
 		return GetSecSpan(*expNt.value());
 	}
 
-	auto GetSecSpan(const IMAGE_NT_HEADERS& nt) 
+	auto GetSecSpan(const IMAGE_NT_HEADERS& nt)  noexcept
 		-> std::span<IMAGE_SECTION_HEADER>
 	{
 		auto pFileHeader = GetFileHeader(nt);
@@ -141,7 +143,7 @@ namespace Mortis::API
 		return std::span<IMAGE_SECTION_HEADER>{	IMAGE_FIRST_SECTION(&nt), pFileHeader->NumberOfSections};
 	}
 
-	auto GetLastSec(HMODULE BaseAddress) 
+	auto GetLastSec(HMODULE BaseAddress)  noexcept
 		-> Expected<PIMAGE_SECTION_HEADER>
 	{
 		auto expSecSpan = GetSecSpan(BaseAddress);
@@ -151,14 +153,14 @@ namespace Mortis::API
 		return &expSecSpan.value().back();
 	}
 
-	auto GetLastSec(const IMAGE_NT_HEADERS& nt) 
+	auto GetLastSec(const IMAGE_NT_HEADERS& nt)  noexcept
 		-> PIMAGE_SECTION_HEADER
 	{
 		auto secSpan = GetSecSpan(nt);
 		return &secSpan.back();
 	}
 
-	auto GetSecByName(HMODULE BaseAddress, std::string_view sName) 
+	auto GetSecByName(HMODULE BaseAddress, std::string_view sName)  noexcept
 		-> Expected<PIMAGE_SECTION_HEADER>
 	{
 		auto expNt = GetNtHeader(BaseAddress);
@@ -168,7 +170,7 @@ namespace Mortis::API
 		return GetSecByName(*expNt.value(), sName);
 	}
 
-	auto GetSecByName(const IMAGE_NT_HEADERS& nt, std::string_view sName) 
+	auto GetSecByName(const IMAGE_NT_HEADERS& nt, std::string_view sName)  noexcept
 		-> Expected<PIMAGE_SECTION_HEADER>
 	{
 		auto secSpan = GetSecSpan(nt);
@@ -182,9 +184,26 @@ namespace Mortis::API
 		return UnExpected("GetSecByName no found sec By Name");
 	}
 
-	std::size_t AlignMent(std::size_t size, std::size_t alignment) {
+	std::size_t AlignMent(std::size_t size, std::size_t alignment) noexcept 
+	{
 		return (size) % (alignment) == 0 ? (size) : ((size) / alignment + 1) * (alignment);
 	}
+
+	std::vector<char> BasePEParser::LoadFile(std::string_view peFilePath)
+	{
+		std::vector<char> fileCache;
+		fileCache.resize(std::filesystem::file_size(peFilePath));
+		std::ifstream fs(peFilePath.data(), std::ios::binary | std::ios::in);
+		if (fs.is_open() == false) {
+			throw std::runtime_error("Failed to open file: " + std::string(peFilePath));
+		}
+		fs.read(reinterpret_cast<char*>(fileCache.data()), fileCache.size());
+		fs.close();
+	}
+
+	BasePEParser::BasePEParser(std::string_view peFilePath) : 
+		BasePEParser<>(LoadFile(peFilePath))
+	{}
 
 
 

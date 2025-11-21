@@ -41,76 +41,77 @@ namespace Mortis::API
 		}
 	};
 
-	TYPE::PPEB GetPEB();
-	TYPE::PTEB GetTEB();
+	TYPE::PPEB GetPEB() noexcept;
+	TYPE::PTEB GetTEB() noexcept;
 
-	auto GetDosAndNtHeader(HANDLE ProcessHandle, HMODULE BaseAddress)
+	auto GetDosAndNtHeader(HANDLE ProcessHandle, HMODULE BaseAddress) noexcept
 		-> std::unique_ptr<std::pair<IMAGE_DOS_HEADER, IMAGE_NT_HEADERS>>;
-	auto GetDosAndNtHeader(HMODULE BaseAddress = nullptr)
+	auto GetDosAndNtHeader(HMODULE BaseAddress = nullptr) noexcept
 		-> Expected<std::pair<PIMAGE_DOS_HEADER, PIMAGE_NT_HEADERS>>;
 
-	auto GetDosHeader(HMODULE BaseAddress = nullptr)
+	auto GetDosHeader(HMODULE BaseAddress = nullptr) noexcept
 		-> Expected<PIMAGE_DOS_HEADER>;
 
-	auto GetNtHeader(HMODULE BaseAddress = nullptr)
+	auto GetNtHeader(HMODULE BaseAddress = nullptr) noexcept
 		-> Expected<PIMAGE_NT_HEADERS>;
-	auto GetNtHeader(const IMAGE_DOS_HEADER& dos)
+	auto GetNtHeader(const IMAGE_DOS_HEADER& dos) noexcept
 		-> Expected<PIMAGE_NT_HEADERS>;
 
-	auto GetFileHeader(HMODULE BaseAddress = nullptr)
+	auto GetFileHeader(HMODULE BaseAddress = nullptr) noexcept
 		-> Expected<PIMAGE_FILE_HEADER>;
-	auto GetFileHeader(IMAGE_NT_HEADERS& nt)
+	auto GetFileHeader(IMAGE_NT_HEADERS& nt) noexcept
 		-> PIMAGE_FILE_HEADER;
-	auto GetFileHeader(const IMAGE_NT_HEADERS& nt)
+	auto GetFileHeader(const IMAGE_NT_HEADERS& nt) noexcept
 		-> const IMAGE_FILE_HEADER*;
 
-	auto GetOptHeader(HMODULE BaseAddress = nullptr)
+	auto GetOptHeader(HMODULE BaseAddress = nullptr) noexcept
 		-> Expected<PIMAGE_OPTIONAL_HEADER>;
-	auto GetOptHeader(IMAGE_NT_HEADERS& nt)
+	auto GetOptHeader(IMAGE_NT_HEADERS& nt) noexcept
 		-> PIMAGE_OPTIONAL_HEADER;
 
-	auto GetSecSpan(HMODULE BaseAddress)
+	auto GetSecSpan(HMODULE BaseAddress) noexcept
 		-> Expected<std::span<IMAGE_SECTION_HEADER>>;
-	auto GetSecSpan(const IMAGE_NT_HEADERS& nt)
+	auto GetSecSpan(const IMAGE_NT_HEADERS& nt) noexcept
 		-> std::span<IMAGE_SECTION_HEADER>;
 
-	auto GetLastSec(HMODULE BaseAddress)
+	auto GetLastSec(HMODULE BaseAddress) noexcept
 		-> Expected<PIMAGE_SECTION_HEADER>;
-	auto GetLastSec(const IMAGE_NT_HEADERS& nt)
+	auto GetLastSec(const IMAGE_NT_HEADERS& nt) noexcept
 		-> PIMAGE_SECTION_HEADER;
 
-	auto GetSecByName(HMODULE BaseAddress, std::string_view sName)
+	auto GetSecByName(HMODULE BaseAddress, std::string_view sName) noexcept
 		-> Expected<PIMAGE_SECTION_HEADER>;
-	auto GetSecByName(const IMAGE_NT_HEADERS& nt, std::string_view sName)
+	auto GetSecByName(const IMAGE_NT_HEADERS& nt, std::string_view sName) noexcept
 		-> Expected<PIMAGE_SECTION_HEADER>;
 
-	auto AlignMent(std::size_t size, std::size_t alignment)
+	auto AlignMent(std::size_t size, std::size_t alignment) noexcept
 		-> std::size_t;
-	auto IsDebuggerPresent()
+	auto IsDebuggerPresent() noexcept
 		-> bool;
 
 
 	template<typename TDecoder>
 	class BaseDecoder : StaticHelper {
-		static std::vector<char> Decrypt(HMODULE strView) { return TDecoder::Decrypt(strView); }
+		static std::vector<char> Decrypt(std::span<char> imagefile) { return TDecoder::Decrypt(imagefile); }
 	};
-
 	class NoneDecoder : public BaseDecoder<NoneDecoder>
 	{
-		static std::vector<char> Decrypt(HMODULE strView) { return {}; }
+		static std::vector<char> Decrypt(std::span<char> imagefile) { return { imagefile.cbegin(), imagefile.cend() }; }
 	};
 
-	template<typename TBaseDecoder = NoneDecoder>
-		requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
-	class PEParser
+	class BasePEParser
 	{
 		std::vector<char> _cache;
 	protected:
 		PIMAGE_DOS_HEADER _pDosHeader = nullptr;
 		PIMAGE_NT_HEADERS _pNtHeader = nullptr;
 	public:
-		PEParser(HMODULE hModule) {
-			_cache = TBaseDecoder::Decrypt(hModule);
+		static std::vector<char> LoadFile(std::string_view peFilePath);
+
+		template<typename TBaseDecoder = NoneDecoder>
+			requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
+		BasePEParser(HMODULE hModule,std::size_t file_size) {
+			_cache = TBaseDecoder::Decrypt({ reinterpret_cast<char*>(hModule) , file_size }); 
 			auto expDosAndNt = GetDosAndNtHeader(_cache.empty() ?  hModule : reinterpret_cast<HMODULE>(_cache.data()));
 			if (expDosAndNt.has_value() == false) {
 				throw std::runtime_error(expDosAndNt.error().data());
@@ -119,6 +120,9 @@ namespace Mortis::API
 			_pDosHeader = pDos;
 			_pNtHeader = pNt;
 		}
+
+		BasePEParser(std::string_view peFilePath);
+
 
 		auto imageBase() const { return reinterpret_cast<HMODULE>(_pDosHeader); }
 		auto getDosHeader() const { return _pDosHeader; }
