@@ -199,11 +199,10 @@ namespace Mortis::API
 		}
 		fs.read(reinterpret_cast<char*>(fileCache.data()), fileCache.size());
 		fs.close();
+
+		return fileCache;
 	}
 
-	BasePEParser::BasePEParser(std::string_view peFilePath) : 
-		BasePEParser<>(LoadFile(peFilePath))
-	{}
 
 
 

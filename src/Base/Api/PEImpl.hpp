@@ -99,6 +99,7 @@ namespace Mortis::API
 		static std::vector<char> Decrypt(std::span<char> imagefile) { return { imagefile.cbegin(), imagefile.cend() }; }
 	};
 
+
 	class BasePEParser
 	{
 		std::vector<char> _cache;
@@ -108,21 +109,19 @@ namespace Mortis::API
 	public:
 		static std::vector<char> LoadFile(std::string_view peFilePath);
 
-		template<typename TBaseDecoder = NoneDecoder>
+		template<typename TBaseDecoder>
 			requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
-		BasePEParser(HMODULE hModule,std::size_t file_size) {
-			_cache = TBaseDecoder::Decrypt({ reinterpret_cast<char*>(hModule) , file_size }); 
-			auto expDosAndNt = GetDosAndNtHeader(_cache.empty() ?  hModule : reinterpret_cast<HMODULE>(_cache.data()));
-			if (expDosAndNt.has_value() == false) {
-				throw std::runtime_error(expDosAndNt.error().data());
-			}
-			auto& [pDos, pNt] = expDosAndNt.value();
-			_pDosHeader = pDos;
-			_pNtHeader = pNt;
-		}
-
-		BasePEParser(std::string_view peFilePath);
-
+		BasePEParser(HMODULE hModule, std::size_t file_size);
+		template<typename TBaseDecoder>
+			requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
+		BasePEParser(std::string_view peFilePath) :
+			BasePEParser(LoadFile(peFilePath))
+		{ }
+		template<typename TBaseDecoder>
+			requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
+		BasePEParser(const std::vector<char>& peFilePath) :
+			BasePEParser(reinterpret_cast<HMODULE>(const_cast<char*>(peFilePath.data())), peFilePath.size())
+		{ }
 
 		auto imageBase() const { return reinterpret_cast<HMODULE>(_pDosHeader); }
 		auto getDosHeader() const { return _pDosHeader; }
@@ -130,4 +129,20 @@ namespace Mortis::API
 		auto getFileHeader() const { return GetFileHeader(*_pNtHeader); }
 		auto getOptHeader() const { return GetOptHeader(*_pNtHeader); }
 	};
+
+	template<typename TBaseDecoder>
+		requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
+	BasePEParser::BasePEParser(HMODULE hModule, std::size_t file_size)
+	{
+		_cache = TBaseDecoder::Decrypt({ reinterpret_cast<char*>(hModule) , file_size });
+		auto expDosAndNt = GetDosAndNtHeader(_cache.empty() ? hModule : reinterpret_cast<HMODULE>(_cache.data()));
+		if (expDosAndNt.has_value() == false) {
+			throw std::runtime_error(expDosAndNt.error().data());
+		}
+		auto& [pDos, pNt] = expDosAndNt.value();
+		_pDosHeader = pDos;
+		_pNtHeader = pNt;
+	}
+
+
 }
