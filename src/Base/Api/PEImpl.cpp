@@ -3,7 +3,6 @@
 
 namespace Mortis::API
 {
-	using namespace Mortis::TYPE;
 	PPEB GetPEB() noexcept {
 #ifdef _WIN64
 		return (PPEB)__readgsqword(0x60);
@@ -20,6 +19,47 @@ namespace Mortis::API
 #endif
 	}
 
+	auto GeLDRNameMap()
+		-> Expected<std::map<std::wstring_view, PLDR_DATA_TABLE_ENTRY>>
+	{
+		auto pLdr = GetPEB()->Ldr;
+		if (!pLdr) {
+			return UnExpected("GetModuleHandleByPEB Error: Ldr is nullptr");
+		}
+		auto pListHead = &(pLdr->InMemoryOrderModuleList);
+		auto pCurrentEntry = pListHead->Flink;
+
+		std::map<std::wstring_view, PLDR_DATA_TABLE_ENTRY> LDRMap;
+		while (pCurrentEntry != pListHead) {
+			auto pEntry = (PLDR_DATA_TABLE_ENTRY)CONTAINING_RECORD(pCurrentEntry, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
+			pCurrentEntry = pCurrentEntry->Flink;
+			std::wstring_view wModuleName(pEntry->BaseDllName.Buffer, pEntry->BaseDllName.Length / sizeof(wchar_t));
+			LDRMap.insert({wModuleName, pEntry });
+		}
+		return LDRMap;
+	}
+
+	auto GetModuleHandleByName(std::wstring_view sModuleName)
+		-> Expected<HMODULE>
+	{
+		auto expLDRMap = GeLDRNameMap();
+		if (expLDRMap.has_value() == false) {
+			return UnExpected(expLDRMap.error());
+		}
+		auto& pLDRMap = expLDRMap.value();
+		auto findIter = pLDRMap.find(sModuleName);
+		if (findIter == pLDRMap.cend()) {
+			return UnExpected("GetModuleHandlePlus: Could not find  sModuleName");
+		}
+		return (HMODULE)findIter->second->DllBase;
+	}
+
+	auto GetModuleHandleByName(std::string_view sModuleName)
+		-> Expected<HMODULE>
+	{
+		auto swModuleName = UTF8ToUTF16(sModuleName);
+		return GetModuleHandleByName(swModuleName);
+	}
 
 	auto IsDebuggerPresent()  noexcept
 		-> bool {

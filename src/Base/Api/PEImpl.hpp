@@ -41,8 +41,17 @@ namespace Mortis::API
 		}
 	};
 
-	TYPE::PPEB GetPEB() noexcept;
-	TYPE::PTEB GetTEB() noexcept;
+	PPEB GetPEB() noexcept;
+	PTEB GetTEB() noexcept;
+
+	auto GeLDRNameMap()
+		-> Expected<std::map<std::wstring_view, PLDR_DATA_TABLE_ENTRY>>;
+
+	auto GetModuleHandleByName(std::wstring_view sModuleName)
+		-> Expected<HMODULE>;
+
+	auto GetModuleHandleByName(std::string_view sModuleName)
+		-> Expected<HMODULE>;
 
 	auto GetDosAndNtHeader(HANDLE ProcessHandle, HMODULE BaseAddress) noexcept
 		-> std::unique_ptr<std::pair<IMAGE_DOS_HEADER, IMAGE_NT_HEADERS>>;

@@ -3,26 +3,31 @@
 
 #include<iostream>
 
-extern BOOL __stdcall DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
+MAKE_EXTERN_DLL;
 
-void TestFunction() {
-	using F = void (*)();
-	auto expDosAndNt = Mo::API::GetProcAddressEx<F>("masoame");
-	if (expDosAndNt.has_value() == false) {
-		spdlog::info(expDosAndNt.error());
-		return;
-	}
-	expDosAndNt.value()();
+extern"C" __declspec(dllexport) auto Test1() {
+	return 8564;
+}
+
+extern"C" __declspec(dllexport) auto Test2() {
+	return "masoame";
+}
+
+extern"C" __declspec(dllexport) auto Test3() {
+	return L"masoame";
+}
+
+__declspec(dllexport) auto Test4() {
+	return std::make_unique<long long>(0x569423);
 }
 
 class DLLMaker : public Mortis::BaseDLL<DLLMaker> 
 {
-	friend Mortis::BaseDLL<DLLMaker>;
+	MAKE_DEFAULT_DLLMAKER;
 	friend BOOL __stdcall ::DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
 protected:
 	
 	bool Initialize(const HMODULE& hModule, PCONTEXT pCtx) {
-		TestFunction();
 		return true;
 	}
 	bool Uninitialize(const HMODULE& hModule, PCONTEXT pCtx) {
@@ -31,11 +36,9 @@ protected:
 	}
 	bool Listen_Thread_Create(const HMODULE& hModule) {
 		return true;
-
 	}
 	bool Listen_Thread_Destroy(const HMODULE& hModule) {
 		return true;
-
 	}
 };
 DEFAULT_MAKE_DLL(DLLMaker);

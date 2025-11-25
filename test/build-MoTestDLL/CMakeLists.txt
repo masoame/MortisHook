@@ -1,5 +1,5 @@
 
-project(Mo-PE-DLLMain LANGUAGES CXX)
+project(MoHookTestDLL LANGUAGES CXX)
 
 add_library(${PROJECT_NAME} SHARED ${PROJECT_NAME}.cpp)
 
