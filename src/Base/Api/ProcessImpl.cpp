@@ -3,8 +3,6 @@
 
 namespace Mortis::API
 {
-
-
 	auto OpenProcessHandle(DWORD th32ProcessID, DWORD dwDesiredAccess, BOOL bInheritHandle)
 		-> ScopeHandle<> {
 		return OpenProcess(dwDesiredAccess, bInheritHandle, th32ProcessID);

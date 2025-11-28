@@ -152,6 +152,4 @@ namespace Mortis::API
 		_pDosHeader = pDos;
 		_pNtHeader = pNt;
 	}
-
-
 }
