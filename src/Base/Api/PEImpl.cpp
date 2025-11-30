@@ -179,7 +179,6 @@ namespace Mortis::API
 		-> std::span<IMAGE_SECTION_HEADER>
 	{
 		auto pFileHeader = GetFileHeader(nt);
-		auto SecNum = pFileHeader->NumberOfSections;
 		return std::span<IMAGE_SECTION_HEADER>{	IMAGE_FIRST_SECTION(&nt), pFileHeader->NumberOfSections};
 	}
 

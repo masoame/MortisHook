@@ -1,7 +1,9 @@
 #pragma once
 #include <utils.hpp>
+
 namespace Mortis
 {
+
 	struct _PEB;
 	struct _PEB32;
 	struct _PEB64;

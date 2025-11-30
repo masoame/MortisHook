@@ -5,6 +5,11 @@ namespace Mortis::API
 {
 	using namespace Mortis::TYPE;
 
+	template<typename AddressType = LPVOID>
+	constexpr auto OffsetAddress(auto address, std::ptrdiff_t offset) noexcept -> AddressType {
+		return reinterpret_cast<AddressType>(reinterpret_cast<std::ptrdiff_t>(address) + offset);
+	};
+
 	inline auto Process32First(HANDLE hSnapshot, LPPROCESSENTRY32W lppe) {
 		return ::Process32FirstW(hSnapshot, lppe);
 	}
@@ -21,10 +26,24 @@ namespace Mortis::API
 		return ::Module32NextW(hSnapshot, lpme);
 	}
 
-	template<typename AddressType = LPVOID>
-	constexpr auto OffsetAddress(auto address, std::ptrdiff_t offset) noexcept -> AddressType {
-		return reinterpret_cast<AddressType>(reinterpret_cast<std::ptrdiff_t>(address) + offset);
-	};
+	std::wstring GetModuleFilePathW(HMODULE hModule = nullptr);
+	std::wstring GetModuleFileNameW(HMODULE hModule = nullptr);
+
+	std::string GetModuleFilePathA(HMODULE hModule = nullptr);
+	std::string GetModuleFileNameA(HMODULE hModule = nullptr);
+
+	auto CreateProcessByPath(std::string_view file_path, DWORD dwCreationFlags = CREATE_SUSPENDED, const std::unique_ptr<STARTUPINFOW>& si = std::make_unique<STARTUPINFOW>())
+		-> std::optional<PROCESS_INFORMATION>;
+
+	auto CreateProcessByPath(std::wstring_view file_path, DWORD dwCreationFlags = CREATE_SUSPENDED, const std::unique_ptr<STARTUPINFOW>& si = std::make_unique<STARTUPINFOW>())
+		-> std::optional<PROCESS_INFORMATION>;
+
+	auto CreateProcessByCommand(std::string_view file_name, DWORD dwCreationFlags = CREATE_SUSPENDED, const std::unique_ptr<STARTUPINFOW>& si = std::make_unique<STARTUPINFOW>())
+		-> std::optional<PROCESS_INFORMATION>;
+
+	auto CreateProcessByCommand(std::wstring_view file_name, DWORD dwCreationFlags = CREATE_SUSPENDED, const std::unique_ptr<STARTUPINFOW>& si = std::make_unique<STARTUPINFOW>())
+		-> std::optional<PROCESS_INFORMATION>;
+
 
 	template<typename T>
 	auto OpenProcessHandle(const PROCESSENTRY32<T>& processEntry32, DWORD dwDesiredAccess = PROCESS_ALL_ACCESS, BOOL bInheritHandle = FALSE)
@@ -35,7 +54,6 @@ namespace Mortis::API
 
 	auto OpenThreadHandle(DWORD dwThreadId, DWORD dwDesiredAccess = THREAD_ALL_ACCESS, BOOL bInheritHandle = FALSE)
 		-> ScopeHandle<>;
-
 
 	template<typename T>
 	auto SearchProcess(std::basic_string_view<T> process_name_view)
@@ -54,7 +72,6 @@ namespace Mortis::API
 		requires std::is_convertible_v<T, std::basic_string_view<C>>
 	auto SearchModule(DWORD th32ProcessID, T&& module_name_view) { return SearchModule<C>(std::forward<T>(module_name_view)); }
 
-
 	template<typename T = char>
 	auto ProcessInfo()
 		-> std::vector<PROCESSENTRY32<T>>;
@@ -67,18 +84,26 @@ namespace Mortis::API
 		>;
 
 	template<typename T = char>
-	auto ModuleInfo(DWORD th32ProcessID)
+	auto GetModuleInfo(DWORD th32ProcessID)
 		-> std::vector<MODULEENTRY32<T>>;
-
-	auto ThreadInfo(DWORD th32ProcessID)
+	auto GetThreadInfo(DWORD th32ProcessID)
 		-> std::vector<THREADENTRY32>;
 
 	template<typename T = char>
 	auto ModuleInfoMap(DWORD th32ProcessID, EnumInfoMapType key_type)
 		-> std::map<std::variant<HMODULE, CaseInsensitiveStdString<T>>, MODULEENTRY32<T>>;
 
+	bool InjectDLL(DWORD th32ProcessID, std::wstring_view dll_path);
+	bool InjectDLL(HANDLE hProcess, std::wstring_view dll_path);
+	bool InjectDLL(DWORD th32ProcessID, std::string_view dll_path);
+	bool InjectDLL(HANDLE hProcess, std::string_view dll_path);
 
+	bool RemoveDLL(DWORD th32ProcessID, std::string_view dll_name);
+	bool RemoveDLL(DWORD th32ProcessID, std::wstring_view dll_name);
+	bool RemoveDLL(HANDLE hProcess, std::string_view dll_name);
+	bool RemoveDLL(HANDLE hProcess, std::wstring_view dll_name);
 }
+
 namespace Mortis::API
 {
 	template<typename T>
@@ -197,25 +222,34 @@ namespace Mortis::API
 	}
 
 	template<typename T>
-	auto ModuleInfo(DWORD th32ProcessID)
+	auto GetModuleInfo(const ScopeHandle<>& hSnapshot)
 		-> std::vector<MODULEENTRY32<T>>
 	{
 		std::vector<MODULEENTRY32<T>> info{};
-		ScopeHandle hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, th32ProcessID);
-		if (hProcessSnap == INVALID_HANDLE_VALUE) {
-			return info;
-		}
 
 		MODULEENTRY32<T> module_entry{};
 		module_entry.dwSize = sizeof(MODULEENTRY32<T>);
 
-		BOOL bFound = Module32First(hProcessSnap, &module_entry);
+		BOOL bFound = Module32First(hSnapshot, &module_entry);
 		while (bFound) {
 			info.emplace_back(module_entry);
-			bFound = Module32Next(hProcessSnap, &module_entry);
+			bFound = Module32Next(hSnapshot, &module_entry);
 		};
 		return info;
 	}
+
+	template<typename T>
+	auto GetModuleInfo(DWORD th32ProcessID)
+		-> std::vector<MODULEENTRY32<T>>
+	{
+		ScopeHandle hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, th32ProcessID);
+		if (hProcessSnap == INVALID_HANDLE_VALUE) {
+			return {};
+		}
+		return GetModuleInfo<T>(hProcessSnap);
+	}
+
+
 
 	template<typename T>
 	auto ModuleInfoMap(DWORD th32ProcessID, EnumInfoMapType key_type)

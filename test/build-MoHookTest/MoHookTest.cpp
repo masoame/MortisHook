@@ -1,5 +1,4 @@
 #include <MoHook.hpp>
-
 #include <catch2/catch_test_macros.hpp>
 
 using namespace Mortis::API;
@@ -50,5 +49,33 @@ TEST_CASE("PE API","[Mo::Hook]") {
 				&& std::wstring(OriginTest3()) == std::wstring(Test3());
 		}());
 	}
+}
 
+TEST_CASE("PE API", "[Mo::ProcessImpl]") {
+	auto pi = CreateProcessByCommand("Notepad.exe");
+	CHECK(pi.has_value());
+
+	if (pi.has_value() == false) {
+		spdlog::error("CreateProcessHandle Notepad.exe Failed");
+		return;
+	}
+	spdlog::info("CreateProcessHandle Notepad.exe Success PID={}", pi->dwProcessId);
+	if (ResumeThread(pi->hThread) == -1) {
+		spdlog::error("ResumeThread Failed");
+		return;
+	}
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(250));
+	auto moduleArr =  GetModuleInfo(GetProcessId(pi->hProcess));
+	for(const auto& module : moduleArr) {
+		spdlog::info("Module Name:{} \t\t Size:{}",std::string_view{ module.szModule },module.modBaseSize);
+	}
+	auto threadArr = GetThreadInfo(GetProcessId(pi->hProcess));
+	for(const auto& thread : threadArr) {
+		spdlog::info("Thread ID:{} \t\t Owner Process ID:{}", thread.th32ThreadID,thread.th32OwnerProcessID);
+	}
+
+	CHECK(InjectDLL(pi->hProcess, L"MoHookTestDLL.dll"));
+	std::this_thread::sleep_for(std::chrono::milliseconds(250));
+	CHECK(RemoveDLL(pi->hProcess, L"MoHookTestDLL.dll"));
 }
