@@ -20,7 +20,7 @@ namespace Mortis::API
 		si.cb = sizeof(si);
 		PROCESS_INFORMATION pi{};
 		BOOL ret = CreateProcessW(file_path.data(), nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
-		return ret ? make_pair(ScopeHandle<>(pi.hProcess), ScopeHandle<>(pi.hThread)) : make_pair(ScopeHandle<>(nullptr), ScopeHandle<>(nullptr));
+		return ret ? std::make_pair(ScopeHandle<>(pi.hProcess), ScopeHandle<>(pi.hThread)) : std::make_pair<ScopeHandle<>, ScopeHandle<>>({}, {});
 	}
 
 	auto resumeThread(const ScopeHandle<>& threadHandle)
