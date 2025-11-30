@@ -1,5 +1,7 @@
 #pragma once
 #include <MoHook.hpp>
+#include <Detours.h>
+
 
 namespace Mortis
 {

@@ -21,7 +21,7 @@ if(MSVC)
       cmake_policy(SET CMP0141 NEW)
       set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
     endif()
-    set(CMAKE_CXX_FLAGS "/EHsc /W3")
+    set(CMAKE_CXX_FLAGS "/EHsc /W4")
 
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 

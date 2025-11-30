@@ -1,5 +1,4 @@
 #include <MoHook.hpp>
-
 #include <catch2/catch_test_macros.hpp>
 
 using namespace Mortis::API;
@@ -50,5 +49,10 @@ TEST_CASE("PE API","[Mo::Hook]") {
 				&& std::wstring(OriginTest3()) == std::wstring(Test3());
 		}());
 	}
+}
 
+TEST_CASE("PE API", "[Mo::ProcessImpl]") {
+	auto arr = std::vector<int>{ 56,89,76,46,6,54 };
+	std::ranges::sort(arr);
+	std::println("{}\n", arr);
 }

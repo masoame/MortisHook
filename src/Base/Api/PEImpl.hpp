@@ -1,7 +1,13 @@
 #pragma once
 #include <utils.hpp>
 #include <PE_types.hpp>
+
+#pragma warning(push)
+#pragma warning(disable:4201)
+#pragma warning(disable:4471)
+#pragma warning(disable:4100)
 #include <PEB.h>
+#pragma warning(pop)
 
 #include <ProcessImpl.hpp>
 

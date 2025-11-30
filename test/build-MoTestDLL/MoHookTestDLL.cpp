@@ -27,17 +27,17 @@ class DLLMaker : public Mortis::BaseDLL<DLLMaker>
 	friend BOOL __stdcall ::DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
 protected:
 	
-	bool Initialize(const HMODULE& hModule, PCONTEXT pCtx) {
+	bool Initialize([[maybe_unused]] const HMODULE& hModule, [[maybe_unused]] PCONTEXT pCtx) {
 		return true;
 	}
-	bool Uninitialize(const HMODULE& hModule, PCONTEXT pCtx) {
+	bool Uninitialize([[maybe_unused]] const HMODULE& hModule, [[maybe_unused]] PCONTEXT pCtx) {
 		return true;
 
 	}
-	bool Listen_Thread_Create(const HMODULE& hModule) {
+	bool Listen_Thread_Create([[maybe_unused]] const HMODULE& hModule) {
 		return true;
 	}
-	bool Listen_Thread_Destroy(const HMODULE& hModule) {
+	bool Listen_Thread_Destroy([[maybe_unused]] const HMODULE& hModule) {
 		return true;
 	}
 };
