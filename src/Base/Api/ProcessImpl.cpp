@@ -147,6 +147,11 @@ namespace Mortis::API
 		if (wait_result == WAIT_FAILED) {
 			return false;
 		}
+
+		DWORD exitCode;
+		if (::GetExitCodeThread(target_thread, &exitCode) && exitCode == FALSE) {
+			return false;
+		}
 		const auto is_memory_freed = ::VirtualFreeEx(hProcess, allocated_mem, 0, MEM_RELEASE);
 		if (is_memory_freed == false) {
 			return false;
@@ -190,6 +195,10 @@ namespace Mortis::API
 		if (wait_result == WAIT_FAILED) {
 			return false;
 		}
+		DWORD exitCode;
+		if (::GetExitCodeThread(target_thread, &exitCode) && exitCode == FALSE) {
+			return false;
+		}
 
 		const auto is_memory_freed = ::VirtualFreeEx(hProcess, allocated_memory, 0, MEM_RELEASE);
 		if (is_memory_freed == false) {
@@ -198,5 +207,4 @@ namespace Mortis::API
 		return true;
 
 	}
-
 }
