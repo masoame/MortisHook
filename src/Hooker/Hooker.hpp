@@ -13,8 +13,6 @@ namespace Mortis
 	class Hooker : public Singleton<Hooker>
 	{
 		friend Singleton<Hooker>;
-	protected:
-		Hooker() {};
 	public:
 		auto TransactionBegin() const { return DetourTransactionBegin(); };
 		auto TransactionCommit() const { return DetourTransactionCommit(); };

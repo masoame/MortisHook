@@ -1,6 +1,6 @@
 if(WIN32)
-    set(ENV{http_proxy} "http://127.0.0.1:10808")
-    set(ENV{https_proxy} "http://127.0.0.1:10808")
+    set(ENV{http_proxy} "http://127.0.0.1:10809")
+    set(ENV{https_proxy} "http://127.0.0.1:10809")
     message(STATUS "Set proxy for Windows build")
 endif()
     message(STATUS "Fetching third-party packages...")
