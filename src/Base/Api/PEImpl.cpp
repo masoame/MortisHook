@@ -241,8 +241,4 @@ namespace Mortis::API
 
 		return fileCache;
 	}
-
-
-
-
 }

@@ -66,19 +66,13 @@ namespace Mortis::API
 			return {};
 		}
 		std::vector<ExportTable> ExportTable{ ExpDir->NumberOfNames,{} };
-
 		std::array<char, 256> ProcName;
-
 		for (DWORD i = 0; i != ExpDir->NumberOfNames; i++) {
-
 			auto& [ordinal, rva, procName] = ExportTable[i];
-
 			if (ReadProcessMemory(ProcessHandle, OffsetAddress(BaseAddress, Namestable[i]), ProcName.data(), ProcName.size() - 1, 0) == false) {
 				return {};
 			}
-
 			procName = ProcName.data();
-
 			if (ReadProcessMemory(ProcessHandle, OffsetAddress(BaseAddress, ExpDir->AddressOfNameOrdinals + sizeof(int16_t) * i), &ordinal, sizeof(int16_t), 0) == false) {
 				return {};
 			}
@@ -123,7 +117,8 @@ namespace Mortis::API
 		return ss;
 	}
 
-	auto ShowTable(HMODULE BaseAddress /*= nullptr*/) -> Expected<std::string>
+	auto ShowTable(HMODULE BaseAddress /*= nullptr*/)
+		-> Expected<std::string>
 	{
 		BaseAddress = BaseAddress ? BaseAddress : reinterpret_cast<HMODULE>(GetPEB()->ImageBaseAddress);
 		std::stringstream ss;
@@ -150,7 +145,8 @@ namespace Mortis::API
 		return result;
 	}
 
-	auto GetProcAddressEx(std::span<std::string_view> fcNameGroup,HMODULE BaseAddress/* = nullptr*/) -> Expected<std::vector<FuncPtr>>
+	auto GetProcAddressEx(std::span<std::string_view> fcNameGroup,HMODULE BaseAddress/* = nullptr*/) 
+		-> Expected<std::vector<FuncPtr>>
 	{
 		BaseAddress = BaseAddress ? BaseAddress : reinterpret_cast<HMODULE>(GetPEB()->ImageBaseAddress);
 		const auto expExportTable = GetTable(BaseAddress);
@@ -165,5 +161,4 @@ namespace Mortis::API
 		}
 		return result;
 	}
-
 }

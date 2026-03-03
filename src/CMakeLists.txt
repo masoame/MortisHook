@@ -23,6 +23,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 	${CMAKE_CURRENT_SOURCE_DIR}/ExecutableFile/ELF
 	${CMAKE_CURRENT_SOURCE_DIR}/ExecutableFile/PE
+	${CMAKE_CURRENT_SOURCE_DIR}/ExecutableFile
 
 	${CMAKE_CURRENT_SOURCE_DIR}/ExportHeader
 	${CMAKE_CURRENT_SOURCE_DIR}/Hooker
