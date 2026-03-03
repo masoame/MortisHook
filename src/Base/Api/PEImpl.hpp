@@ -125,20 +125,6 @@ namespace Mortis::API
 	public:
 		static std::vector<char> LoadFile(std::string_view peFilePath);
 
-		//template<typename TBaseDecoder>
-		//	requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
-		//BasePEParser(HMODULE hModule, std::size_t file_size);
-		//template<typename TBaseDecoder>
-		//	requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
-		//BasePEParser(std::string_view peFilePath) :
-		//	BasePEParser(LoadFile(peFilePath))
-		//{ }
-		//template<typename TBaseDecoder>
-		//	requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
-		//BasePEParser(const std::vector<char>& peFilePath) :
-		//	BasePEParser(reinterpret_cast<HMODULE>(const_cast<char*>(peFilePath.data())), peFilePath.size())
-		//{ }
-
 		template<typename TBaseDecoder>
 			requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
 		BasePEParser(std::span<char> fileBuffer);
@@ -154,8 +140,8 @@ namespace Mortis::API
 		requires(std::is_base_of_v<BaseDecoder<TBaseDecoder>, TBaseDecoder>)
 	BasePEParser::BasePEParser(std::span<char> fileBuffer) 
 	{
-		_cache = TBaseDecoder::Decrypt({ fileBuffer.data() , fileBuffer.size()});
-		auto expDosAndNt = GetDosAndNtHeader(_cache.empty() ? hModule : reinterpret_cast<HMODULE>(_cache.data()));
+		_cache = TBaseDecoder::Decrypt(fileBuffer);
+		auto expDosAndNt = GetDosAndNtHeader(reinterpret_cast<HMODULE>(_cache.data()));
 		if (expDosAndNt.has_value() == false) {
 			throw std::runtime_error(expDosAndNt.error().data());
 		}
