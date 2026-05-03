@@ -1,26 +1,23 @@
-#pragma once
+﻿#pragma once
+//#include <Detours.h>
 #include <MoHook.hpp>
-#include <Detours.h>
-
-
-namespace Mortis
-{
-	struct HookPackage
-	{
-		void* oldPtr;
-	};
-
-	class Hooker : public Singleton<Hooker>
-	{
-		friend Singleton<Hooker>;
-	public:
-		auto TransactionBegin() const { return DetourTransactionBegin(); };
-		auto TransactionCommit() const { return DetourTransactionCommit(); };
-
-		template<auto f, typename TFun = decltype(f), typename TFunAdapter = std::add_pointer_t<std::remove_pointer_t<TFun>>>
-			requires(BC::ConceptFunType<TFun>)
-		auto Attach(TFunAdapter* sf) {
-			return ::DetourAttach((LPVOID*)sf, f);
-		}
-	};
-}
+//
+//namespace Mortis {
+//
+//struct HookPackage {
+//  void *oldPtr;
+//};
+//
+//class Hooker : public Singleton<Hooker> {
+//  friend Singleton<Hooker>;
+//
+//public:
+//  auto TransactionBegin() const { return DetourTransactionBegin(); };
+//  auto TransactionCommit() const { return DetourTransactionCommit(); };
+//
+//  //template<typename TFunAdapter>
+//  //  auto Attach(TFunAdapter *sf) {
+//  //  //return ::DetourAttach((LPVOID *)sf, f);
+//  //}
+//};
+//} // namespace Mortis

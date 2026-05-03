@@ -34,10 +34,12 @@ namespace Mortis::API
 		-> Expected<std::string>;
 
 	//导出函数地址
-	template<BC::ConceptFunType F = FuncPtr, typename TFuncPtr = std::add_pointer_t<std::remove_pointer_t<F>>>
+
+
+	template<typename TFuncPtr>
 	auto GetProcAddressEx(HANDLE ProcessHandle, HMODULE BaseAddress, std::string_view fcName)
 		-> TFuncPtr;
-	template<BC::ConceptFunType F = FuncPtr, typename TFuncPtr = std::add_pointer_t<std::remove_pointer_t<F>>>
+	template<typename TFuncPtr>
 	auto GetProcAddressEx(std::string_view fcName, HMODULE BaseAddress = nullptr)
 		-> Expected<TFuncPtr>;
 
@@ -52,7 +54,7 @@ namespace Mortis::API
 
 namespace Mortis::API
 {
-	template<BC::ConceptFunType F, typename TFuncPtr>
+	template<typename TFuncPtr>
 	auto GetProcAddressEx(HANDLE ProcessHandle, HMODULE BaseAddress, std::string_view fcName)
 		-> TFuncPtr
 	{
@@ -65,7 +67,7 @@ namespace Mortis::API
 		return nullptr;
 	}
 
-	template<BC::ConceptFunType F,typename TFuncPtr>
+	template<typename TFuncPtr>
 	auto GetProcAddressEx(std::string_view fcName, HMODULE BaseAddress /*= nullptr*/)
 		-> Expected<TFuncPtr>
 	{

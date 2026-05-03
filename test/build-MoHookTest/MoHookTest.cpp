@@ -1,11 +1,11 @@
-#include <MoHook.hpp>
+﻿#include <MoHook.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 using namespace Mortis::API;
 extern"C" __declspec(dllexport) void masoame() { }
 
 TEST_CASE("PE API", "[Mo::PBE]") {
-	auto fn = Mo::API::GetProcAddressEx<decltype(masoame)>("masoame");
+	auto fn = Mo::API::GetProcAddressEx<std::add_pointer_t<decltype(masoame)>>("masoame");
 	CHECK_NOTHROW(fn);
 	fn.value()();
 }

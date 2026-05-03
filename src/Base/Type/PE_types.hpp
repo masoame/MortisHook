@@ -1,5 +1,6 @@
 #pragma once
-#include <utils.hpp>
+#include <MoUtils/utils.hpp>
+
 
 namespace Mortis::TYPE
 {
@@ -38,5 +39,4 @@ namespace Mortis::TYPE
 	using MODULEENTRY32 = std::conditional_t<std::is_same_v<T, char>, ::MODULEENTRY32, ::MODULEENTRY32W>;
 }
 
-#include <PEConcept.hpp>
 
